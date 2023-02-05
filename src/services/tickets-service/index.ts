@@ -1,4 +1,4 @@
-import { notFoundError } from "@/errors";
+import { notFoundError, paymentRequiredError } from "@/errors";
 import ticketRepository from "@/repositories/ticket-repository";
 import enrollmentRepository from "@/repositories/enrollment-repository";
 import { TicketStatus } from "@prisma/client";
@@ -18,6 +18,7 @@ async function getTicketByUserId(userId: number) {
     throw notFoundError();
   }
   const ticket = await ticketRepository.findTicketByEnrollmentId(enrollment.id);
+
   if (!ticket) {
     throw notFoundError();
   }
@@ -50,6 +51,11 @@ async function getTicketTypeById(ticketId: number) {
   if (!ticketWithType) {
     throw notFoundError();
   }
+
+  if (ticketWithType.TicketType.isRemote && ticketWithType.status === "RESERVED") {
+    throw paymentRequiredError();
+  }
+
   return ticketWithType;
 }
 
